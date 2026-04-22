@@ -118,22 +118,28 @@ export async function saveMetadata(entry) {
   const freshRecord = Object.freeze({
     evidenceId:   entry.evidenceId,
     caseId:       entry.caseId,
+    caseName:     entry.caseName ?? entry.caseId ?? null,
     fileName:     entry.fileName,
     fileStoredAs: entry.fileStoredAs,
     fileSize:     entry.fileSize,
     hash:         entry.hash,
     uploadedBy:   entry.uploadedBy,
-    txHash:       entry.txHash,
+    blockchainHash: entry.blockchainHash ?? entry.hash ?? null,
+    txHash:       entry.txHash ?? entry.transactionHash ?? null,
+    transactionHash: entry.transactionHash ?? entry.txHash ?? null,
     blockNumber:  entry.blockNumber,
     timestamp:    new Date().toISOString(),
+    registeredAt: entry.registeredAt ?? new Date().toISOString(),
     // IPFS support capabilities
     metadataCID:  entry.metadataCID ?? null,
     fileCID:      entry.fileCID ?? null,
+    ipfsCid:      entry.ipfsCid ?? entry.fileCID ?? null,
     fileHash:     entry.fileHash ?? null,
     description:  entry.description ?? null,
-    type:         entry.type ?? null,
+    evidenceType: entry.evidenceType ?? entry.type ?? null,
     location:     entry.location ?? null,
-    date:         entry.date ?? null,
+    suspectName:  entry.suspectName ?? null,
+    dateCollected: entry.dateCollected ?? entry.date ?? null,
   });
 
   records.push(freshRecord);

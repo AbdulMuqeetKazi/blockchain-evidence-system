@@ -1,15 +1,44 @@
+import { useState, useEffect } from "react";
 import { FileText, ShieldCheck, AlertTriangle, Database, ArrowRight, Clock } from "lucide-react";
 import { StatCard } from "../components/StatCard";
 import { Card, CardHeader, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/Badge";
+import { Badge } from "../components/ui/badge";
 import { Link } from "react-router";
 import { useEvidence } from "../contexts/EvidenceContext";
+import { getAllEvidence } from "../../services/api";
 
 export function Dashboard() {
-  const { totalCount, isConnected } = useEvidence();
+  const { totalCount, isConnected, network } = useEvidence();
 
-  // No backend endpoint for recent activity, leaving empty state
-  const recentActivity: any[] = [];
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
+  const fetchRecent = async () => {
+    try {
+      const response = await getAllEvidence();
+      let dataArray = [];
+      if (Array.isArray(response)) dataArray = response;
+      else if (response && Array.isArray(response.data)) dataArray = response.data;
+      else if (response?.data && Array.isArray(response.data.data)) dataArray = response.data.data;
+      
+      if (dataArray.length > 0) {
+        // Sort by registration time descending and take top 5
+        const sorted = dataArray.sort((a: any, b: any) => {
+          return new Date(b.registeredAt || b.timestamp || 0).getTime() - new Date(a.registeredAt || a.timestamp || 0).getTime();
+        });
+        setRecentActivity(sorted.slice(0, 5));
+      } else {
+        setRecentActivity([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch recent evidence:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecent();
+    const interval = setInterval(fetchRecent, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -42,7 +71,7 @@ export function Dashboard() {
         />
         <StatCard
           title="Network"
-          value="Sepolia"
+          value={network}
           icon={Database}
           color={isConnected ? "green" : "purple"}
           trend={isConnected ? "Connected" : "Disconnected"}
@@ -150,20 +179,16 @@ export function Dashboard() {
                       </td>
                       <td className="px-6 py-4 text-white">{item.caseName}</td>
                       <td className="px-6 py-4">
-                        {item.status === "verified" ? (
-                          <Badge variant="success">✓ Verified</Badge>
-                        ) : (
-                          <Badge variant="error">✗ Tampered</Badge>
-                        )}
+                        <Badge variant="info">Uploaded</Badge>
                       </td>
                       <td className="px-6 py-4 text-[#9CA3AF] font-mono text-sm">
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4" />
-                          {item.timestamp}
+                          {item.registeredAt ? new Date(item.registeredAt).toLocaleString() : "N/A"}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-[#9CA3AF] font-mono text-sm">
-                        {item.hash}
+                        {item.blockchainHash || item.hash}
                       </td>
                     </tr>
                   ))

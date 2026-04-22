@@ -4,7 +4,7 @@ import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/Badge";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
-import { api, parseApiError } from "../../services/api";
+import { parseApiError, getEvidenceById } from "../../services/api";
 import { toast } from "sonner";
 import { EvidenceHistory } from "../../types/evidence";
 
@@ -24,8 +24,34 @@ export function History() {
     setLoading(true);
     setHasSearched(true);
     try {
-      const history = await api.getEvidenceHistory(evidenceId);
-      setTimeline(history);
+      const result = await getEvidenceById(evidenceId);
+      const evidence = result?.data || result;
+
+      if (evidence?.id) {
+        const historyData = [
+          {
+            id: `${evidence.id}_uploaded`,
+            action: "Evidence Uploaded",
+            type: "upload",
+            timestamp: evidence.registeredAt,
+            owner: evidence.uploadedBy,
+            evidenceId: evidence.id,
+            wallet: evidence.uploadedBy
+          },
+          {
+            id: `${evidence.id}_blockchain`,
+            action: "Stored on Blockchain",
+            type: "verify",
+            timestamp: evidence.registeredAt,
+            hash: evidence.blockchainHash || evidence.hash,
+            evidenceId: evidence.id,
+            wallet: evidence.owner
+          }
+        ];
+        setTimeline(historyData as EvidenceHistory);
+      } else {
+        setTimeline([]);
+      }
     } catch (error) {
       setTimeline([]);
       toast.error(parseApiError(error));
@@ -60,9 +86,10 @@ export function History() {
     }
   };
 
-  const uploads = timeline.filter(t => t.type.toLowerCase() === "upload").length;
-  const verifications = timeline.filter(t => t.type.toLowerCase() === "verify").length;
-  const transfers = timeline.filter(t => t.type.toLowerCase() === "transfer").length;
+  const safeTimeline = Array.isArray(timeline) ? timeline : [];
+  const uploads = safeTimeline.filter(t => t.type?.toLowerCase() === "upload").length;
+  const verifications = safeTimeline.filter(t => t.type?.toLowerCase() === "verify").length;
+  const transfers = safeTimeline.filter(t => t.type?.toLowerCase() === "transfer").length;
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -141,7 +168,7 @@ export function History() {
                 <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#3B82F6]/50 via-[#3B82F6]/20 to-transparent" />
 
                 <div className="space-y-6">
-                  {timeline.map((item, index) => (
+                  {safeTimeline.map((item, index) => (
                     <div key={item.id || index} className="relative flex gap-6 group">
                       <div className={`flex-shrink-0 w-16 h-16 rounded-xl border-2 ${getActionColor(item.type)} flex items-center justify-center z-10 group-hover:scale-110 transition-transform bg-[#0B0F19]`}>
                         {getActionIcon(item.type)}

@@ -5,7 +5,7 @@ import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { CopyButton } from "../components/CopyButton";
-import { api, parseApiError } from "../../services/api";
+import { parseApiError, verifyEvidence } from "../../services/api";
 import { toast } from "sonner";
 
 export function Verify() {
@@ -33,9 +33,11 @@ export function Verify() {
       data.append("file", file);
       data.append("evidenceId", evidenceId);
 
-      const result = await api.verifyEvidence(data);
-      setVerificationResult(result);
-      if (result.valid) {
+      const result = await verifyEvidence(data);
+      const normalized = result?.data || result;
+      normalized.valid = normalized?.status === "VALID";
+      setVerificationResult(normalized);
+      if (normalized.valid) {
         toast.success("Evidence is authentic and matches the blockchain record");
       } else {
         toast.error("Warning: Evidence has been tampered with or does not match!");

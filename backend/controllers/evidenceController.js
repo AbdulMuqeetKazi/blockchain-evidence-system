@@ -28,6 +28,7 @@ import {
   saveMetadata,
   getMetadataById,
   findByHash,
+  getAllMetadata,
 } from "../utils/metadataStore.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -56,6 +57,30 @@ function isNotFoundError(err) {
     err.message?.includes("EvidenceNotFound") ||
     (err.code === "CALL_EXCEPTION" && err.data === null)
   );
+}
+
+function normalizeEvidenceRecord(record, metadata) {
+  return {
+    id: String(record.id),
+    caseName: metadata?.caseName ?? metadata?.caseId ?? null,
+    description: metadata?.description ?? null,
+    evidenceType: metadata?.evidenceType ?? metadata?.type ?? null,
+    location: metadata?.location ?? null,
+    suspectName: metadata?.suspectName ?? null,
+    dateCollected: metadata?.dateCollected ?? metadata?.date ?? null,
+    fileName: metadata?.fileName ?? null,
+    hash: record.hash,
+    owner: record.owner,
+    uploadedBy: metadata?.uploadedBy ?? null,
+    timestamp: record.timestamp,
+    ipfsCid: metadata?.ipfsCid ?? metadata?.fileCID ?? null,
+    metadataCid: metadata?.metadataCID ?? null,
+    transactionHash: metadata?.transactionHash ?? metadata?.txHash ?? null,
+    blockNumber: metadata?.blockNumber ?? null,
+    registeredAt: record.registeredAt ?? metadata?.registeredAt ?? null,
+    blockchainHash: metadata?.blockchainHash ?? record.hash,
+    fileHash: metadata?.fileHash ?? null,
+  };
 }
 
 // ─── POST /evidence/upload ────────────────────────────────────────────────────
@@ -97,6 +122,10 @@ export async function uploadEvidence(req, res, next) {
 
     const useIPFS = req.body.useIPFS === "true";
     const caseId = req.body.caseId?.trim() || generateCaseId();
+    const caseName = req.body.caseName?.trim() || caseId;
+    const evidenceType = req.body.evidenceType?.trim() || req.body.type?.trim() || req.file.mimetype;
+    const suspectName = req.body.suspectName?.trim() || req.body.suspect?.trim() || null;
+    const dateCollected = req.body.dateCollected?.trim() || req.body.date?.trim() || null;
 
     let hashToStore;
     let fileCID = null;
@@ -113,12 +142,14 @@ export async function uploadEvidence(req, res, next) {
         fileCID = await uploadFileToIPFS(req.file);
         
         const ipfsMetadata = {
+          caseName,
           caseId,
           fileName: req.file.originalname,
           description: req.body.description || "Blockchain evidence",
-          type: req.file.mimetype,
+          evidenceType,
           location: req.body.location || "Unknown",
-          date: req.body.date || new Date().toISOString(),
+          suspectName,
+          dateCollected: dateCollected || new Date().toISOString(),
           uploadedBy: signerAddress, 
           fileCID,
         };
@@ -144,20 +175,26 @@ export async function uploadEvidence(req, res, next) {
     await saveMetadata({
       evidenceId: result.evidenceId,
       caseId,
+      caseName,
       fileName: req.file.originalname,
       fileStoredAs: req.file.filename,
       fileSize: req.file.size,
       hash: hashToStore,
+      blockchainHash: hashToStore,
       fileHash: rawFileHash, // ensures we can detect duplicates across flows
       uploadedBy: signerAddress,
       txHash: result.transactionHash,
+      transactionHash: result.transactionHash,
       blockNumber: result.blockNumber,
       metadataCID,
       fileCID,
+      ipfsCid: fileCID,
       description: req.body.description || null,
-      type: req.file.mimetype,
+      evidenceType,
       location: req.body.location || null,
-      date: req.body.date || null,
+      suspectName,
+      dateCollected,
+      registeredAt: new Date().toISOString(),
     });
 
     return res.status(201).json({
@@ -170,8 +207,12 @@ export async function uploadEvidence(req, res, next) {
         timestamp: new Date().toISOString(),
         txHash: result.transactionHash,
         hash: hashToStore,
+        fileHash: rawFileHash,
+        blockchainHash: hashToStore,
+        transactionHash: result.transactionHash,
         blockNumber: result.blockNumber,
         gasUsed: result.gasUsed,
+        registeredAt: new Date().toISOString(),
         file: {
           storedAs: req.file.filename,
           sizeBytes: req.file.size,
@@ -225,6 +266,7 @@ export async function verifyEvidence(req, res, next) {
 
     let isMatch = false;
     let computedHash;
+    const uploadedFileHash = computeHash(await readFile(req.file.path)).toLowerCase();
 
     if (metadata?.metadataCID) {
       // IPFS verification flow
@@ -240,8 +282,7 @@ export async function verifyEvidence(req, res, next) {
       }
     } else {
       // Legacy flow
-      const fileBuffer = await readFile(req.file.path);
-      computedHash = computeHash(fileBuffer).toLowerCase();
+      computedHash = uploadedFileHash;
       isMatch = record.hash.toLowerCase() === computedHash;
     }
 
@@ -256,7 +297,11 @@ export async function verifyEvidence(req, res, next) {
         fileName: metadata?.fileName ?? null,
         storedHash: record.hash,
         computedHash,
+        uploadedFileHash,
+        blockchainHash: record.hash,
+        originalUploadedFileHash: metadata?.fileHash ?? null,
         owner: record.owner,
+        timestamp: record.timestamp,
         registeredAt: record.registeredAt,
       },
     });
@@ -347,12 +392,7 @@ export async function getEvidenceById(req, res, next) {
 
     return res.json({
       success: true,
-      data: {
-        ...record,
-        caseId: metadata?.caseId ?? null,
-        fileName: metadata?.fileName ?? null,
-        uploadedBy: metadata?.uploadedBy ?? null,
-      },
+      data: normalizeEvidenceRecord(record, metadata),
     });
   } catch (err) {
     if (isNotFoundError(err)) {
@@ -361,6 +401,30 @@ export async function getEvidenceById(req, res, next) {
         error: `Evidence ID ${req.params.id} not found on-chain.`,
       });
     }
+    next(err);
+  }
+}
+
+// ─── GET /evidence/all ────────────────────────────────────────────────────────
+export async function getAllEvidence(req, res, next) {
+  try {
+    const allMetadata = await getAllMetadata();
+    const hydrated = await Promise.all(
+      allMetadata.map(async (metadata) => {
+        const record = await blockchain.getEvidence(metadata.evidenceId);
+        return normalizeEvidenceRecord(record, metadata);
+      })
+    );
+
+    hydrated.sort(
+      (a, b) => new Date(b.registeredAt || 0).getTime() - new Date(a.registeredAt || 0).getTime()
+    );
+
+    return res.json({
+      success: true,
+      data: hydrated,
+    });
+  } catch (err) {
     next(err);
   }
 }
@@ -461,16 +525,15 @@ export async function getEvidenceByHash(req, res, next) {
     // 4. Return full evidence
     return res.json({
       success: true,
-      data: {
-        evidenceId: id.toString(),
-        caseId: ipfsMetadata?.caseId || metadata.caseId,
+      data: normalizeEvidenceRecord(blockchainData, {
+        ...metadata,
+        caseName: ipfsMetadata?.caseName || metadata.caseName || metadata.caseId,
         description: ipfsMetadata?.description || metadata.description || null,
-        fileCID: metadata.fileCID,
-        metadataCID: metadata.metadataCID,
-        owner: blockchainData.owner,
-        timestamp: blockchainData.timestamp,
-        hash: blockchainData.hash,
-      },
+        evidenceType: ipfsMetadata?.evidenceType || metadata.evidenceType || metadata.type || null,
+        location: ipfsMetadata?.location || metadata.location || null,
+        suspectName: ipfsMetadata?.suspectName || metadata.suspectName || null,
+        dateCollected: ipfsMetadata?.dateCollected || metadata.dateCollected || metadata.date || null,
+      }),
     });
   } catch (err) {
     next(err);

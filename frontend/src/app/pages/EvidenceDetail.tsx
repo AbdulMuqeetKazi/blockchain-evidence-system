@@ -1,30 +1,66 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router";
-import { ArrowLeft, Hash, Database, FileText, ShieldCheck, Send, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Hash, Database, FileText, ShieldCheck, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/Badge";
-import { Button } from "../components/ui/Button";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
 import { CopyButton } from "../components/CopyButton";
+import { getEvidenceById } from "../../services/api";
 
 export function EvidenceDetail() {
   const { id } = useParams();
 
-  const evidence = {
-    evidenceId: id,
-    caseName: "Digital Forensics Case #445",
-    description: "Evidence collected from cybercrime investigation involving unauthorized access to secure systems. Multiple digital artifacts including log files, network captures, and system snapshots were recovered during the initial response phase.",
-    type: "Digital Evidence",
-    location: "Server Room A, Building 3",
-    date: "2026-04-15",
-    suspect: "John Doe",
-    hash: "0x8f3a2b5c7d9e1f4a6b8c0d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a",
-    owner: "0x742d35Cc6634C0532925a3b844Bc9e4e3e4e4e3a",
-    timestamp: "2026-04-15 14:23:45",
-    blockNumber: 5234891,
-    transactionHash: "0x9d4e3f2a1b0c8d6e4f2a0b8c6d4e2f0a8b6c4d2e0f8a6b4c2d0e8f6a4b2c0d8e",
-    fileCID: "QmX9Z8K2hJ4vN5mP7rQ3sT6uY8wB1cD2eF4gH5iJ6kL7mN",
-    metadataCID: "QmP7Q8R9sT0uV1wX2yZ3aB4cD5eF6gH7iJ8kL9mN0oP1q",
-    status: "verified"
-  };
+  const [evidence, setEvidence] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvidence = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        const response = await getEvidenceById(id);
+        if (response && response.success) {
+          setEvidence(response.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch evidence details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvidence();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px]">
+        <Loader2 className="w-10 h-10 text-[#3B82F6] animate-spin mb-4" />
+        <p className="text-[#9CA3AF]">Loading evidence details...</p>
+      </div>
+    );
+  }
+
+  if (!evidence) {
+    return (
+      <div className="max-w-7xl space-y-6">
+        <div className="flex items-center gap-4">
+          <Link to="/">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <Hash className="w-12 h-12 text-[#EF4444] mb-4" />
+            <h2 className="text-xl font-semibold text-white">Evidence Not Found</h2>
+            <p className="text-[#9CA3AF] mt-2">The requested evidence could not be retrieved.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl space-y-6">
@@ -86,11 +122,11 @@ export function EvidenceDetail() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-[#9CA3AF] mb-1">Evidence Type</p>
-                  <Badge variant="default">{evidence.type}</Badge>
+                  <Badge variant="default">{evidence.evidenceType || "N/A"}</Badge>
                 </div>
                 <div>
                   <p className="text-sm text-[#9CA3AF] mb-1">Collection Date</p>
-                  <p className="text-white font-mono">{evidence.date}</p>
+                  <p className="text-white font-mono">{evidence.dateCollected || "N/A"}</p>
                 </div>
               </div>
 
@@ -101,7 +137,7 @@ export function EvidenceDetail() {
                 </div>
                 <div>
                   <p className="text-sm text-[#9CA3AF] mb-1">Suspect Name</p>
-                  <p className="text-white">{evidence.suspect}</p>
+                  <p className="text-white">{evidence.suspectName || "N/A"}</p>
                 </div>
               </div>
             </CardContent>
@@ -141,7 +177,7 @@ export function EvidenceDetail() {
                 <div>
                   <p className="text-sm text-[#9CA3AF] mb-2">Timestamp</p>
                   <div className="bg-[#1F2937]/50 px-4 py-3 rounded-lg border border-[#3B82F6]/20">
-                    <span className="text-sm font-mono text-white">{evidence.timestamp}</span>
+                    <span className="text-sm font-mono text-white">{evidence.registeredAt || "N/A"}</span>
                   </div>
                 </div>
               </div>
@@ -149,7 +185,7 @@ export function EvidenceDetail() {
               <div>
                 <p className="text-sm text-[#9CA3AF] mb-2">Transaction Hash</p>
                 <div className="flex items-center justify-between bg-[#1F2937]/50 px-4 py-3 rounded-lg border border-[#3B82F6]/20">
-                  <span className="text-sm font-mono text-white break-all">{evidence.transactionHash}</span>
+                  <span className="text-sm font-mono text-white break-all">{evidence.transactionHash || "N/A"}</span>
                   <CopyButton text={evidence.transactionHash} />
                 </div>
               </div>
@@ -167,16 +203,16 @@ export function EvidenceDetail() {
               <div>
                 <p className="text-sm text-[#9CA3AF] mb-2">File CID</p>
                 <div className="flex items-center justify-between bg-[#1F2937]/50 px-4 py-3 rounded-lg border border-[#F59E0B]/20">
-                  <span className="text-sm font-mono text-white break-all">{evidence.fileCID}</span>
-                  <CopyButton text={evidence.fileCID} />
+                  <span className="text-sm font-mono text-white break-all">{evidence.ipfsCid || "N/A"}</span>
+                  <CopyButton text={evidence.ipfsCid || ""} />
                 </div>
               </div>
 
               <div>
                 <p className="text-sm text-[#9CA3AF] mb-2">Metadata CID</p>
                 <div className="flex items-center justify-between bg-[#1F2937]/50 px-4 py-3 rounded-lg border border-[#F59E0B]/20">
-                  <span className="text-sm font-mono text-white break-all">{evidence.metadataCID}</span>
-                  <CopyButton text={evidence.metadataCID} />
+                  <span className="text-sm font-mono text-white break-all">{evidence.metadataCid || "N/A"}</span>
+                  <CopyButton text={evidence.metadataCid || ""} />
                 </div>
               </div>
 

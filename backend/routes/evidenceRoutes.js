@@ -20,6 +20,7 @@ import {
   verifyEvidence,
   transferCustody,
   getEvidenceById,
+  getAllEvidence,
   getEvidenceCount,
   getEvidenceHistory,
   getEvidenceByHash,
@@ -95,6 +96,8 @@ router.post("/transfer", transferCustody);
  * MUST be defined before /:id to prevent "count" being parsed as an ID.
  */
 router.get("/count", getEvidenceCount);
+router.get("/all", getAllEvidence);
+router.get("/", getAllEvidence);
 
 /**
  * GET /evidence/history/:id

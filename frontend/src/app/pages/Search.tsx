@@ -5,7 +5,7 @@ import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
 import { CopyButton } from "../components/CopyButton";
-import { api, parseApiError } from "../../services/api";
+import { parseApiError, getEvidenceById, getEvidenceByHash } from "../../services/api";
 import { toast } from "sonner";
 
 export function Search() {
@@ -27,11 +27,11 @@ export function Search() {
     try {
       let result;
       if (activeTab === "id") {
-        result = await api.getEvidenceById(searchQuery);
+        result = await getEvidenceById(searchQuery);
       } else {
-        result = await api.getEvidenceByHash(searchQuery);
+        result = await getEvidenceByHash(searchQuery);
       }
-      setSearchResult(result);
+      setSearchResult(result?.data || result);
     } catch (error) {
       toast.error(parseApiError(error));
     } finally {
@@ -39,7 +39,7 @@ export function Search() {
     }
   };
 
-  const ipfsUrl = searchResult?.fileCID ? `https://ipfs.io/ipfs/${searchResult.fileCID}` : "";
+  const ipfsUrl = searchResult?.ipfsCid ? `https://ipfs.io/ipfs/${searchResult.ipfsCid}` : "";
 
   return (
     <div className="max-w-5xl space-y-6">
@@ -118,11 +118,11 @@ export function Search() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-[#9CA3AF] mb-1">Type</p>
-                    <Badge variant="default">{searchResult.type || "Digital"}</Badge>
+                    <Badge variant="default">{searchResult.evidenceType || "Digital"}</Badge>
                   </div>
                   <div>
                     <p className="text-sm text-[#9CA3AF] mb-1">Date</p>
-                    <p className="text-white font-mono">{searchResult.date || "N/A"}</p>
+                    <p className="text-white font-mono">{searchResult.dateCollected || "N/A"}</p>
                   </div>
                 </div>
 
@@ -133,7 +133,7 @@ export function Search() {
                   </div>
                   <div>
                     <p className="text-sm text-[#9CA3AF] mb-1">Suspect</p>
-                    <p className="text-white">{searchResult.suspect || "N/A"}</p>
+                    <p className="text-white">{searchResult.suspectName || "N/A"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -231,16 +231,16 @@ export function Search() {
                 <div>
                   <p className="text-xs text-[#9CA3AF] mb-1">File CID</p>
                   <div className="flex items-center justify-between bg-[#1F2937]/50 px-3 py-2 rounded border border-[#F59E0B]/20">
-                    <span className="text-xs font-mono text-white truncate">{searchResult.fileCID || "N/A"}</span>
-                    {searchResult.fileCID && <CopyButton text={searchResult.fileCID} />}
+                    <span className="text-xs font-mono text-white truncate">{searchResult.ipfsCid || "N/A"}</span>
+                    {searchResult.ipfsCid && <CopyButton text={searchResult.ipfsCid} />}
                   </div>
                 </div>
 
                 <div>
                   <p className="text-xs text-[#9CA3AF] mb-1">Metadata CID</p>
                   <div className="flex items-center justify-between bg-[#1F2937]/50 px-3 py-2 rounded border border-[#F59E0B]/20">
-                    <span className="text-xs font-mono text-white truncate">{searchResult.metadataCID || "N/A"}</span>
-                    {searchResult.metadataCID && <CopyButton text={searchResult.metadataCID} />}
+                    <span className="text-xs font-mono text-white truncate">{searchResult.metadataCid || "N/A"}</span>
+                    {searchResult.metadataCid && <CopyButton text={searchResult.metadataCid} />}
                   </div>
                 </div>
 

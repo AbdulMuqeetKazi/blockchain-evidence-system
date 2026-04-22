@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Upload as UploadIcon, File, CheckCircle, ExternalLink, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "../components/ui/card";
-import { Input } from "../components/ui/Input";
-import { Textarea } from "../components/ui/Textarea";
-import { Select } from "../components/ui/Select";
-import { Button } from "../components/ui/Button";
-import { Badge } from "../components/ui/Badge";
+import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { CopyButton } from "../components/CopyButton";
-import { api, parseApiError } from "../../services/api";
+import { parseApiError, uploadEvidence } from "../../services/api";
 import { toast } from "sonner";
 import { useEvidence } from "../contexts/EvidenceContext";
 
@@ -40,13 +40,16 @@ export function Upload() {
       const data = new FormData();
       data.append("file", formData.file);
       data.append("caseId", formData.caseName);
+      data.append("caseName", formData.caseName);
       data.append("description", formData.description);
+      data.append("evidenceType", formData.type);
       data.append("location", formData.location);
-      data.append("date", formData.date);
+      data.append("dateCollected", formData.date);
+      data.append("suspectName", formData.suspect);
       data.append("useIPFS", useIPFS.toString());
 
-      const result = await api.uploadEvidence(data);
-      setUploadResult(result);
+      const result = await uploadEvidence(data);
+      setUploadResult(result?.data || result);
       toast.success("Evidence uploaded successfully");
       refreshCount(); // Update dashboard stats
     } catch (error) {
@@ -76,59 +79,71 @@ export function Upload() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  label="Case Name"
-                  placeholder="Enter case name"
-                  value={formData.caseName}
-                  onChange={(e) => setFormData({ ...formData, caseName: e.target.value })}
-                  required
-                />
-
-                <Textarea
-                  label="Description"
-                  placeholder="Detailed description of the evidence"
-                  rows={4}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  required
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <Select
-                    label="Evidence Type"
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    options={[
-                      { value: "digital", label: "Digital Evidence" },
-                      { value: "physical", label: "Physical Evidence" },
-                      { value: "document", label: "Document" },
-                      { value: "media", label: "Media File" },
-                      { value: "other", label: "Other" }
-                    ]}
-                  />
-
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#E5E7EB]">Case Name</label>
                   <Input
-                    label="Location"
-                    placeholder="Evidence location"
-                    value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Enter case name"
+                    value={formData.caseName}
+                    onChange={(e) => setFormData({ ...formData, caseName: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#E5E7EB]">Description</label>
+                  <Textarea
+                    placeholder="Detailed description of the evidence"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    required
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label="Date of Collection"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[#E5E7EB]">Evidence Type</label>
+                    <Select value={formData.type} onValueChange={(val) => setFormData({ ...formData, type: val })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="digital">Digital Evidence</SelectItem>
+                        <SelectItem value="physical">Physical Evidence</SelectItem>
+                        <SelectItem value="document">Document</SelectItem>
+                        <SelectItem value="media">Media File</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                  <Input
-                    label="Suspect Name"
-                    placeholder="Enter suspect name"
-                    value={formData.suspect}
-                    onChange={(e) => setFormData({ ...formData, suspect: e.target.value })}
-                  />
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[#E5E7EB]">Location</label>
+                    <Input
+                      placeholder="Evidence location"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[#E5E7EB]">Date of Collection</label>
+                    <Input
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-[#E5E7EB]">Suspect Name</label>
+                    <Input
+                      placeholder="Enter suspect name"
+                      value={formData.suspect}
+                      onChange={(e) => setFormData({ ...formData, suspect: e.target.value })}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -196,7 +211,7 @@ export function Upload() {
                   <CheckCircle className="w-5 h-5 text-[#22C55E]" />
                   <h3 className="font-semibold text-white">Upload Successful</h3>
                 </div>
-                <Badge variant="success">Confirmed on Blockchain</Badge>
+                <Badge variant="default" className="bg-[#22C55E]/10 text-[#22C55E] hover:bg-[#22C55E]/20 border-[#22C55E]/20">Confirmed on Blockchain</Badge>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
