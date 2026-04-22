@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { Shield, AlertCircle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { Card, CardBody } from "../components/ui/Card";
+import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/Button";
 import { BlockchainLoginBackground } from "../components/BlockchainLoginBackground";
 
@@ -30,7 +30,7 @@ export function Login() {
       <BlockchainLoginBackground />
 
       <Card className="max-w-md w-full">
-        <CardBody className="py-12 px-8">
+        <CardContent className="py-12 px-8">
           <div className="text-center mb-8">
             <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-[#3B82F6] to-[#2563EB] rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/30">
               <Shield className="w-10 h-10 text-white" />
@@ -84,7 +84,7 @@ export function Login() {
               By signing in, you agree to our Terms of Service and Privacy Policy
             </p>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

@@ -3,7 +3,7 @@ services:
     name: blockchain-evidence-backend
     runtime: node
     rootDir: backend
-    buildCommand: npm install
+    buildCommand: cd .. && npm install && npx hardhat compile && cd backend && npm install
     startCommand: npm start
     envVars:
       - key: NODE_ENV

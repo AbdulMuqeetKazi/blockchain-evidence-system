@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search as SearchIcon, Hash, FileText, User, Clock, Image as ImageIcon, Loader2, ExternalLink } from "lucide-react";
-import { Card, CardHeader, CardBody } from "../components/ui/Card";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -73,7 +73,7 @@ export function Search() {
             </button>
           </div>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <form onSubmit={handleSearch} className="flex gap-3">
             <Input
               placeholder={activeTab === "id" ? "Enter evidence ID (e.g., EV-1234)" : "Enter hash (e.g., 0x8f3a2...)"}
@@ -91,7 +91,7 @@ export function Search() {
               {loading ? "Searching..." : "Search"}
             </Button>
           </form>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {searchResult && (
@@ -104,7 +104,7 @@ export function Search() {
                   <Badge variant="info">{searchResult.id || searchResult.evidenceId || "Evidence"}</Badge>
                 </div>
               </CardHeader>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm text-[#9CA3AF] mb-1">Case Name</p>
                   <p className="text-white font-medium">{searchResult.caseName || "N/A"}</p>
@@ -136,14 +136,14 @@ export function Search() {
                     <p className="text-white">{searchResult.suspect || "N/A"}</p>
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
                 <h2 className="text-xl font-semibold text-white">File Preview</h2>
               </CardHeader>
-              <CardBody>
+              <CardContent>
                 {ipfsUrl ? (
                   <div className="aspect-video bg-[#1F2937] rounded-lg border border-[#3B82F6]/20 overflow-hidden relative group">
                      <iframe 
@@ -167,7 +167,7 @@ export function Search() {
                     </div>
                   </div>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
 
@@ -179,7 +179,7 @@ export function Search() {
                   <h3 className="font-semibold text-white">Blockchain Data</h3>
                 </div>
               </CardHeader>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 <div>
                   <p className="text-xs text-[#9CA3AF] mb-1">Hash</p>
                   <div className="flex items-center justify-between bg-[#1F2937]/50 px-3 py-2 rounded border border-[#3B82F6]/20">
@@ -217,7 +217,7 @@ export function Search() {
                     )}
                   </div>
                 </div>
-              </CardBody>
+              </CardContent>
             </Card>
 
             <Card>
@@ -227,7 +227,7 @@ export function Search() {
                   <h3 className="font-semibold text-white">IPFS Storage</h3>
                 </div>
               </CardHeader>
-              <CardBody className="space-y-4">
+              <CardContent className="space-y-4">
                 <div>
                   <p className="text-xs text-[#9CA3AF] mb-1">File CID</p>
                   <div className="flex items-center justify-between bg-[#1F2937]/50 px-3 py-2 rounded border border-[#F59E0B]/20">
@@ -252,7 +252,7 @@ export function Search() {
                 >
                   View on IPFS Gateway
                 </a>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
         </div>

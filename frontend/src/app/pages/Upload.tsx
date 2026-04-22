@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Upload as UploadIcon, File, CheckCircle, ExternalLink, Loader2 } from "lucide-react";
-import { Card, CardHeader, CardBody } from "../components/ui/Card";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/Input";
 import { Textarea } from "../components/ui/Textarea";
 import { Select } from "../components/ui/Select";
@@ -9,7 +9,7 @@ import { Badge } from "../components/ui/Badge";
 import { CopyButton } from "../components/CopyButton";
 import { api, parseApiError } from "../../services/api";
 import { toast } from "sonner";
-import { useEvidence } from "../../contexts/EvidenceContext";
+import { useEvidence } from "../contexts/EvidenceContext";
 
 export function Upload() {
   const [useIPFS, setUseIPFS] = useState(true);
@@ -74,7 +74,7 @@ export function Upload() {
               <h2 className="text-xl font-semibold text-white">Evidence Details</h2>
               <p className="text-sm text-[#9CA3AF] mt-1">Fill in all required information</p>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
                   label="Case Name"
@@ -184,7 +184,7 @@ export function Upload() {
                   </Button>
                 </div>
               </form>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
@@ -198,7 +198,7 @@ export function Upload() {
                 </div>
                 <Badge variant="success">Confirmed on Blockchain</Badge>
               </CardHeader>
-              <CardBody className="space-y-3">
+              <CardContent className="space-y-3">
                 <div>
                   <p className="text-xs text-[#9CA3AF] mb-1">Evidence ID</p>
                   <div className="flex items-center justify-between bg-[#1F2937]/50 px-3 py-2 rounded border border-[#3B82F6]/20">
@@ -273,7 +273,7 @@ export function Upload() {
                     )}
                   </>
                 )}
-              </CardBody>
+              </CardContent>
             </Card>
           )}
         </div>

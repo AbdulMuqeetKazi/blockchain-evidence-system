@@ -1,6 +1,6 @@
 import { FileText, ShieldCheck, AlertTriangle, Database, ArrowRight, Clock } from "lucide-react";
 import { StatCard } from "../components/StatCard";
-import { Card, CardHeader, CardBody } from "../components/ui/Card";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/Badge";
 import { Link } from "react-router";
 import { useEvidence } from "../contexts/EvidenceContext";
@@ -54,7 +54,7 @@ export function Dashboard() {
           <h2 className="text-xl font-semibold text-white">Evidence Flow</h2>
           <p className="text-sm text-[#9CA3AF] mt-1">How evidence is stored and verified</p>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <div className="flex items-center justify-between gap-4 py-4">
             <div className="flex-1">
               <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#3B82F6]/20 to-[#2563EB]/20 border border-[#3B82F6]/30 rounded-lg flex items-center justify-center mb-2">
@@ -94,7 +94,7 @@ export function Dashboard() {
               <p className="text-center text-xs text-[#9CA3AF] mt-1">Immutable Record</p>
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
 
       <Card>
@@ -111,7 +111,7 @@ export function Dashboard() {
             </Link>
           </div>
         </CardHeader>
-        <CardBody className="p-0">
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -171,7 +171,7 @@ export function Dashboard() {
               </tbody>
             </table>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </div>
   );

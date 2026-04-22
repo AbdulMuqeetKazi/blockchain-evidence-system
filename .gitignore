@@ -19,7 +19,8 @@ backend/dist/
 /bundle
 
 # Hardhat Build Artifacts
-artifacts/
+artifacts/*
+!artifacts/contracts/
 cache/
 types/
 coverage/

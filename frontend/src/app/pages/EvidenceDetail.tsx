@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router";
 import { ArrowLeft, Hash, Database, FileText, ShieldCheck, Send, Image as ImageIcon } from "lucide-react";
-import { Card, CardHeader, CardBody } from "../components/ui/Card";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { CopyButton } from "../components/CopyButton";
@@ -72,7 +72,7 @@ export function EvidenceDetail() {
                 <h2 className="text-xl font-semibold text-white">Evidence Metadata</h2>
               </div>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-[#9CA3AF] mb-1">Case Name</p>
                 <p className="text-white font-medium">{evidence.caseName}</p>
@@ -104,7 +104,7 @@ export function EvidenceDetail() {
                   <p className="text-white">{evidence.suspect}</p>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card>
@@ -114,7 +114,7 @@ export function EvidenceDetail() {
                 <h2 className="text-xl font-semibold text-white">Blockchain Information</h2>
               </div>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-[#9CA3AF] mb-2">Evidence Hash</p>
                 <div className="flex items-center justify-between bg-[#1F2937]/50 px-4 py-3 rounded-lg border border-[#3B82F6]/20">
@@ -153,7 +153,7 @@ export function EvidenceDetail() {
                   <CopyButton text={evidence.transactionHash} />
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card>
@@ -163,7 +163,7 @@ export function EvidenceDetail() {
                 <h2 className="text-xl font-semibold text-white">IPFS Storage</h2>
               </div>
             </CardHeader>
-            <CardBody className="space-y-4">
+            <CardContent className="space-y-4">
               <div>
                 <p className="text-sm text-[#9CA3AF] mb-2">File CID</p>
                 <div className="flex items-center justify-between bg-[#1F2937]/50 px-4 py-3 rounded-lg border border-[#F59E0B]/20">
@@ -183,7 +183,7 @@ export function EvidenceDetail() {
               <Button variant="outline" className="w-full">
                 View on IPFS Gateway
               </Button>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
 
@@ -192,7 +192,7 @@ export function EvidenceDetail() {
             <CardHeader>
               <h3 className="font-semibold text-white">File Preview</h3>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               <div className="aspect-square bg-gradient-to-br from-[#1F2937] to-[#111827] rounded-lg border border-[#3B82F6]/20 flex items-center justify-center">
                 <div className="text-center">
                   <ImageIcon className="w-16 h-16 text-[#3B82F6] mx-auto mb-3" />
@@ -200,14 +200,14 @@ export function EvidenceDetail() {
                   <p className="text-sm text-[#9CA3AF] mt-1">Click to view full size</p>
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <h3 className="font-semibold text-white">Quick Actions</h3>
             </CardHeader>
-            <CardBody className="space-y-2">
+            <CardContent className="space-y-2">
               <Button variant="outline" className="w-full justify-start">
                 <ShieldCheck className="w-4 h-4 mr-2" />
                 Verify Evidence
@@ -224,7 +224,7 @@ export function EvidenceDetail() {
                 <Send className="w-4 h-4 mr-2" />
                 Transfer Ownership
               </Button>
-            </CardBody>
+            </CardContent>
           </Card>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ShieldCheck, Upload as UploadIcon, AlertTriangle, CheckCircle, User, Clock, Loader2 } from "lucide-react";
-import { Card, CardHeader, CardBody } from "../components/ui/Card";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
 import { Badge } from "../components/ui/Badge";
@@ -59,7 +59,7 @@ export function Verify() {
           <h2 className="text-xl font-semibold text-white">Upload Evidence for Verification</h2>
           <p className="text-sm text-[#9CA3AF] mt-1">Provide file and evidence ID to verify authenticity</p>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <form onSubmit={handleVerify} className="space-y-4">
             <Input
               label="Evidence ID"
@@ -104,7 +104,7 @@ export function Verify() {
               {loading ? "Verifying..." : "Verify Evidence"}
             </Button>
           </form>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {verificationResult && (
@@ -125,7 +125,7 @@ export function Verify() {
               )}
             </div>
           </CardHeader>
-          <CardBody className="space-y-6">
+          <CardContent className="space-y-6">
             <div>
               <h3 className="text-sm font-semibold text-[#9CA3AF] uppercase tracking-wider mb-4">
                 Hash Comparison
@@ -200,7 +200,7 @@ export function Verify() {
                 </div>
               </div>
             </div>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
     </div>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Upload, ShieldCheck, Send, Clock, Search as SearchIcon, Loader2 } from "lucide-react";
-import { Card, CardHeader, CardBody } from "../components/ui/Card";
+import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/Badge";
 import { Input } from "../components/ui/Input";
 import { Button } from "../components/ui/Button";
@@ -72,7 +72,7 @@ export function History() {
       </div>
 
       <Card>
-        <CardBody>
+        <CardContent>
           <form onSubmit={handleSearch} className="flex gap-3">
             <Input
               placeholder="Enter evidence ID (e.g., EV-1234) or Hash"
@@ -90,16 +90,16 @@ export function History() {
               {loading ? "Searching..." : "Search History"}
             </Button>
           </form>
-        </CardBody>
+        </CardContent>
       </Card>
 
       {hasSearched && !loading && timeline.length === 0 && (
         <Card>
-          <CardBody className="text-center py-12">
+          <CardContent className="text-center py-12">
             <Clock className="w-12 h-12 text-[#9CA3AF] mx-auto mb-4" />
             <p className="text-white text-lg font-medium">No history found</p>
             <p className="text-[#9CA3AF] mt-2">There are no blockchain events recorded for this evidence ID.</p>
-          </CardBody>
+          </CardContent>
         </Card>
       )}
 
@@ -107,27 +107,27 @@ export function History() {
         <>
           <div className="grid grid-cols-3 gap-6">
             <Card>
-              <CardBody className="text-center">
+              <CardContent className="text-center">
                 <Upload className="w-8 h-8 text-[#3B82F6] mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white mb-1">{uploads}</p>
                 <p className="text-sm text-[#9CA3AF]">Total Uploads</p>
-              </CardBody>
+              </CardContent>
             </Card>
 
             <Card>
-              <CardBody className="text-center">
+              <CardContent className="text-center">
                 <ShieldCheck className="w-8 h-8 text-[#22C55E] mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white mb-1">{verifications}</p>
                 <p className="text-sm text-[#9CA3AF]">Verifications</p>
-              </CardBody>
+              </CardContent>
             </Card>
 
             <Card>
-              <CardBody className="text-center">
+              <CardContent className="text-center">
                 <Send className="w-8 h-8 text-[#F59E0B] mx-auto mb-2" />
                 <p className="text-2xl font-bold text-white mb-1">{transfers}</p>
                 <p className="text-sm text-[#9CA3AF]">Transfers</p>
-              </CardBody>
+              </CardContent>
             </Card>
           </div>
 
@@ -136,7 +136,7 @@ export function History() {
               <h2 className="text-xl font-semibold text-white">Activity Timeline</h2>
               <p className="text-sm text-[#9CA3AF] mt-1">Chronological record of all transactions</p>
             </CardHeader>
-            <CardBody>
+            <CardContent>
               <div className="relative">
                 <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#3B82F6]/50 via-[#3B82F6]/20 to-transparent" />
 
@@ -149,7 +149,7 @@ export function History() {
 
                       <div className="flex-1 pb-6">
                         <Card hover className="h-full">
-                          <CardBody className="flex items-center justify-between">
+                          <CardContent className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-semibold text-white capitalize">{item.action || item.type}</h3>
@@ -181,14 +181,14 @@ export function History() {
                               {item.type.toLowerCase() === "verify" && <Badge variant="success">Verify</Badge>}
                               {item.type.toLowerCase() === "transfer" && <Badge variant="warning">Transfer</Badge>}
                             </div>
-                          </CardBody>
+                          </CardContent>
                         </Card>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            </CardBody>
+            </CardContent>
           </Card>
         </>
       )}
