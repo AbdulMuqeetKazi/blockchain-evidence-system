@@ -34,10 +34,13 @@ import { requestIdMiddleware } from "./utils/requestId.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for Render deployment (correct IP address handling)
+app.set('trust proxy', 1);
+
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://your-netlify-domain.netlify.app"
+    process.env.FRONTEND_URL || "https://your-netlify-domain.netlify.app"
   ],
   credentials: true
 }));
