@@ -260,46 +260,34 @@ export async function verifyEvidence(req, res, next) {
     const id = parseEvidenceId(evidenceId, res);
     if (id === null) return;
 
-    // Fetch the on-chain record and metadata.
+    // Fetch blockchain record (for context fields) and persisted metadata.
     const metadata = await getMetadataById(id);
     const record = await blockchain.getEvidence(id);
-
-    let isMatch = false;
-    let computedHash;
-    const uploadedFileHash = computeHash(await readFile(req.file.path)).toLowerCase();
-
-    if (metadata?.metadataCID) {
-      // IPFS verification flow
-      try {
-        await fetchMetadataFromIPFS(metadata.metadataCID);
-        computedHash = computeStringHash(metadata.metadataCID).toLowerCase();
-        isMatch = record.hash.toLowerCase() === computedHash;
-      } catch (ipfsErr) {
-        return res.status(502).json({
-          success: false,
-          error: `IPFS retrieval failed during verification: ${ipfsErr.message}`,
-        });
-      }
-    } else {
-      // Legacy flow
-      computedHash = uploadedFileHash;
-      isMatch = record.hash.toLowerCase() === computedHash;
+    const storedFileHash = metadata?.fileHash?.toLowerCase?.() ?? null;
+    if (!storedFileHash) {
+      return res.status(422).json({
+        success: false,
+        error: `Evidence ID ${id} is missing original file checksum (fileHash) in metadata.`,
+      });
     }
 
-    console.log(`[verify] id=${id}  status=${isMatch ? "VALID" : "TAMPERED"}  file="${req.file.originalname}" IPFS=${!!metadata?.metadataCID}`);
+    // Verification must be file checksum vs original uploaded checksum.
+    const uploadedFileHash = computeHash(await readFile(req.file.path)).toLowerCase();
+    const matches = uploadedFileHash === storedFileHash;
+
+    console.log(`[verify] id=${id}  status=${matches ? "VALID" : "TAMPERED"}  file="${req.file.originalname}"`);
 
     return res.json({
       success: true,
       data: {
-        status: isMatch ? "VALID" : "TAMPERED",
+        status: matches ? "VALID" : "TAMPERED",
         evidenceId: record.id,
         caseId: metadata?.caseId ?? null,
         fileName: metadata?.fileName ?? null,
-        storedHash: record.hash,
-        computedHash,
-        uploadedFileHash,
-        blockchainHash: record.hash,
-        originalUploadedFileHash: metadata?.fileHash ?? null,
+        storedHash: storedFileHash,
+        computedHash: uploadedFileHash,
+        blockchainHash: metadata?.blockchainHash ?? record.hash,
+        matches,
         owner: record.owner,
         timestamp: record.timestamp,
         registeredAt: record.registeredAt,
