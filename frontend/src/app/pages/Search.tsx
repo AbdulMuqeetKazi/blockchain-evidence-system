@@ -106,6 +106,11 @@ export function Search() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
+                  <p className="text-sm text-[#9CA3AF] mb-1">File Name</p>
+                  <p className="text-white font-medium">{searchResult.fileName || "N/A"}</p>
+                </div>
+
+                <div>
                   <p className="text-sm text-[#9CA3AF] mb-1">Case Name</p>
                   <p className="text-white font-medium">{searchResult.caseName || "N/A"}</p>
                 </div>
@@ -117,11 +122,11 @@ export function Search() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-[#9CA3AF] mb-1">Type</p>
+                    <p className="text-sm text-[#9CA3AF] mb-1">Evidence Type</p>
                     <Badge variant="default">{searchResult.evidenceType || "Digital"}</Badge>
                   </div>
                   <div>
-                    <p className="text-sm text-[#9CA3AF] mb-1">Date</p>
+                    <p className="text-sm text-[#9CA3AF] mb-1">Date Collected</p>
                     <p className="text-white font-mono">{searchResult.dateCollected || "N/A"}</p>
                   </div>
                 </div>
@@ -132,7 +137,7 @@ export function Search() {
                     <p className="text-white">{searchResult.location || "N/A"}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-[#9CA3AF] mb-1">Suspect</p>
+                    <p className="text-sm text-[#9CA3AF] mb-1">Suspect Name</p>
                     <p className="text-white">{searchResult.suspectName || "N/A"}</p>
                   </div>
                 </div>
@@ -199,7 +204,16 @@ export function Search() {
                 <div>
                   <p className="text-xs text-[#9CA3AF] mb-1">Timestamp</p>
                   <div className="bg-[#1F2937]/50 px-3 py-2 rounded border border-[#3B82F6]/20">
-                    <span className="text-sm font-mono text-white">{searchResult.timestamp ? new Date(searchResult.timestamp).toLocaleString() : "N/A"}</span>
+                    <span className="text-sm font-mono text-white">
+                      {searchResult.timestamp ? new Date(Number(searchResult.timestamp) * 1000).toLocaleString() : "N/A"}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs text-[#9CA3AF] mb-1">Registered At</p>
+                  <div className="bg-[#1F2937]/50 px-3 py-2 rounded border border-[#3B82F6]/20">
+                    <span className="text-sm font-mono text-white">{searchResult.registeredAt || "N/A"}</span>
                   </div>
                 </div>
                 

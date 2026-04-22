@@ -59,9 +59,9 @@ function isNotFoundError(err) {
   );
 }
 
-function normalizeEvidenceRecord(record, metadata) {
+function hydrateEvidenceRecord(blockchainRecord, metadata) {
   return {
-    id: String(record.id),
+    id: String(blockchainRecord.id),
     caseName: metadata?.caseName ?? metadata?.caseId ?? null,
     description: metadata?.description ?? null,
     evidenceType: metadata?.evidenceType ?? metadata?.type ?? null,
@@ -69,16 +69,16 @@ function normalizeEvidenceRecord(record, metadata) {
     suspectName: metadata?.suspectName ?? null,
     dateCollected: metadata?.dateCollected ?? metadata?.date ?? null,
     fileName: metadata?.fileName ?? null,
-    hash: record.hash,
-    owner: record.owner,
+    hash: blockchainRecord.hash,
+    owner: blockchainRecord.owner,
     uploadedBy: metadata?.uploadedBy ?? null,
-    timestamp: record.timestamp,
-    ipfsCid: metadata?.ipfsCid ?? metadata?.fileCID ?? null,
-    metadataCid: metadata?.metadataCID ?? null,
+    timestamp: blockchainRecord.timestamp,
+    ipfsCid: metadata?.ipfsCid ?? metadata?.fileCID ?? metadata?.fileCid ?? null,
+    metadataCid: metadata?.metadataCid ?? metadata?.metadataCID ?? null,
     transactionHash: metadata?.transactionHash ?? metadata?.txHash ?? null,
     blockNumber: metadata?.blockNumber ?? null,
-    registeredAt: record.registeredAt ?? metadata?.registeredAt ?? null,
-    blockchainHash: metadata?.blockchainHash ?? record.hash,
+    registeredAt: blockchainRecord.registeredAt ?? metadata?.registeredAt ?? null,
+    blockchainHash: metadata?.blockchainHash ?? blockchainRecord.hash,
     fileHash: metadata?.fileHash ?? null,
   };
 }
@@ -380,7 +380,7 @@ export async function getEvidenceById(req, res, next) {
 
     return res.json({
       success: true,
-      data: normalizeEvidenceRecord(record, metadata),
+      data: hydrateEvidenceRecord(record, metadata),
     });
   } catch (err) {
     if (isNotFoundError(err)) {
@@ -400,7 +400,7 @@ export async function getAllEvidence(req, res, next) {
     const hydrated = await Promise.all(
       allMetadata.map(async (metadata) => {
         const record = await blockchain.getEvidence(metadata.evidenceId);
-        return normalizeEvidenceRecord(record, metadata);
+        return hydrateEvidenceRecord(record, metadata);
       })
     );
 
@@ -513,7 +513,7 @@ export async function getEvidenceByHash(req, res, next) {
     // 4. Return full evidence
     return res.json({
       success: true,
-      data: normalizeEvidenceRecord(blockchainData, {
+      data: hydrateEvidenceRecord(blockchainData, {
         ...metadata,
         caseName: ipfsMetadata?.caseName || metadata.caseName || metadata.caseId,
         description: ipfsMetadata?.description || metadata.description || null,
