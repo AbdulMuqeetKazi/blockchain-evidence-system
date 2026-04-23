@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ShieldCheck, Upload as UploadIcon, AlertTriangle, CheckCircle, User, Clock, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "../components/ui/card";
-import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
-import { Badge } from "../components/ui/Badge";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { CopyButton } from "../components/CopyButton";
 import { parseApiError, verifyEvidence } from "../../services/api";
 import { toast } from "sonner";
@@ -63,13 +63,15 @@ export function Verify() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleVerify} className="space-y-4">
-            <Input
-              label="Evidence ID"
-              placeholder="Enter evidence ID (e.g., EV-1234)"
-              value={evidenceId}
-              onChange={(e) => setEvidenceId(e.target.value)}
-              required
-            />
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-[#E5E7EB]">Evidence ID</label>
+              <Input
+                placeholder="Enter evidence ID (e.g., EV-1234)"
+                value={evidenceId}
+                onChange={(e) => setEvidenceId(e.target.value)}
+                required
+              />
+            </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-[#E5E7EB]">

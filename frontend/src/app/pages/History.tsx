@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Upload, ShieldCheck, Send, Clock, Search as SearchIcon, Loader2 } from "lucide-react";
 import { Card, CardHeader, CardContent } from "../components/ui/card";
-import { Badge } from "../components/ui/Badge";
-import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
+import { Badge } from "../components/ui/badge";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
 import { parseApiError, getEvidenceById } from "../../services/api";
 import { toast } from "sonner";
 import { EvidenceHistory } from "../../types/evidence";
@@ -175,7 +175,7 @@ export function History() {
                       </div>
 
                       <div className="flex-1 pb-6">
-                        <Card hover className="h-full">
+                        <Card className="h-full hover:border-[#3B82F6]/50 transition-colors">
                           <CardContent className="flex items-center justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">

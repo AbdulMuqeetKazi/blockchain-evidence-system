@@ -1,5 +1,5 @@
 import { Shield, Wallet, User, LogOut, Edit } from "lucide-react";
-import { Button } from "../ui/Button";
+import { Button } from "../ui/button";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { ProfileModal } from "../ProfileModal";

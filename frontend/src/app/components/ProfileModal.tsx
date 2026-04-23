@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { X, User, Save } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { Input } from "./ui/Input";
-import { Button } from "./ui/Button";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -49,12 +49,14 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             <p className="text-xs text-[#9CA3AF] mt-1">Email cannot be changed</p>
           </div>
 
-          <Input
-            label="Display Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your display name"
-          />
+          <div>
+            <label className="block text-sm font-medium text-[#9CA3AF] mb-2">Display Name</label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your display name"
+            />
+          </div>
 
           <div className="flex gap-3 pt-4">
             <Button onClick={handleSave} size="lg" className="flex-1">

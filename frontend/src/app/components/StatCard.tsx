@@ -19,7 +19,7 @@ export function StatCard({ title, value, icon: Icon, trend, color = "blue" }: St
   };
 
   return (
-    <Card hover>
+    <Card className="hover:border-[#3B82F6]/50 transition-colors">
       <CardContent className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-[#9CA3AF] mb-2">{title}</p>

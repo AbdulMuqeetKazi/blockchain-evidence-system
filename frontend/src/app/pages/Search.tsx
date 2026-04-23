@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Search as SearchIcon, Hash, FileText, User, Clock, Image as ImageIcon, Loader2, ExternalLink } from "lucide-react";
 import { Card, CardHeader, CardContent } from "../components/ui/card";
-import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
-import { Badge } from "../components/ui/Badge";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 import { CopyButton } from "../components/CopyButton";
 import { parseApiError, getEvidenceById, getEvidenceByHash } from "../../services/api";
 import { toast } from "sonner";

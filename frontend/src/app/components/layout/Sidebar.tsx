@@ -12,7 +12,8 @@ import { useEvidence } from "../../contexts/EvidenceContext";
 
 export function Sidebar() {
   const location = useLocation();
-  const { totalCount, error } = useEvidence();
+  const { totalCount, isConnected } = useEvidence();
+  const error = !isConnected;
 
   const navItems = [
     { path: "/", label: "Dashboard", icon: LayoutDashboard },

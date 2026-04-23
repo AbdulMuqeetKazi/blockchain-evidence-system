@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { Shield, AlertCircle } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { Card, CardContent } from "../components/ui/card";
-import { Button } from "../components/ui/Button";
+import { Button } from "../components/ui/button";
 import { BlockchainLoginBackground } from "../components/BlockchainLoginBackground";
 
 export function Login() {
