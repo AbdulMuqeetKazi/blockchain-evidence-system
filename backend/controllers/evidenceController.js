@@ -23,13 +23,7 @@ import {
   uploadMetadataToIPFS,
   fetchMetadataFromIPFS
 } from "../services/ipfsService.js";
-import {
-  generateCaseId,
-  saveMetadata,
-  getMetadataById,
-  findByHash,
-  getAllMetadata,
-} from "../utils/metadataStore.js";
+import { supabase } from "../services/supabaseService.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -59,27 +53,31 @@ function isNotFoundError(err) {
   );
 }
 
-function hydrateEvidenceRecord(blockchainRecord, metadata) {
+function generateCaseId() {
+  return `CASE-${Date.now()}`;
+}
+
+function hydrateEvidenceRecord(dbRow) {
   return {
-    id: String(blockchainRecord.id),
-    caseName: metadata?.caseName ?? metadata?.caseId ?? null,
-    description: metadata?.description ?? null,
-    evidenceType: metadata?.evidenceType ?? metadata?.type ?? null,
-    location: metadata?.location ?? null,
-    suspectName: metadata?.suspectName ?? null,
-    dateCollected: metadata?.dateCollected ?? metadata?.date ?? null,
-    fileName: metadata?.fileName ?? null,
-    hash: blockchainRecord.hash,
-    owner: blockchainRecord.owner,
-    uploadedBy: metadata?.uploadedBy ?? null,
-    timestamp: blockchainRecord.timestamp,
-    ipfsCid: metadata?.ipfsCid ?? metadata?.fileCID ?? metadata?.fileCid ?? null,
-    metadataCid: metadata?.metadataCid ?? metadata?.metadataCID ?? null,
-    transactionHash: metadata?.transactionHash ?? metadata?.txHash ?? null,
-    blockNumber: metadata?.blockNumber ?? null,
-    registeredAt: blockchainRecord.registeredAt ?? metadata?.registeredAt ?? null,
-    blockchainHash: metadata?.blockchainHash ?? blockchainRecord.hash,
-    fileHash: metadata?.fileHash ?? null,
+    id: String(dbRow.id),
+    caseName: dbRow.case_name ?? null,
+    description: dbRow.description ?? null,
+    evidenceType: dbRow.evidence_type ?? null,
+    location: dbRow.location ?? null,
+    suspectName: dbRow.suspect_name ?? null,
+    dateCollected: dbRow.date_collected ?? null,
+    fileName: dbRow.file_name ?? null,
+    fileHash: dbRow.file_hash ?? null,
+    blockchainHash: dbRow.blockchain_hash ?? null,
+    transactionHash: dbRow.transaction_hash ?? null,
+    blockNumber: dbRow.block_number ?? null,
+    ipfsCid: dbRow.ipfs_cid ?? null,
+    metadataCid: dbRow.metadata_cid ?? null,
+    owner: dbRow.owner ?? null,
+    uploadedBy: dbRow.uploaded_by ?? null,
+    timestamp: dbRow.timestamp ?? null,
+    registeredAt: dbRow.registered_at ?? null,
+    hash: dbRow.blockchain_hash ?? null,
   };
 }
 
@@ -106,15 +104,22 @@ export async function uploadEvidence(req, res, next) {
     const rawFileHash = computeHash(fileBuffer).toLowerCase();
 
     // ── Duplicate check BEFORE expensive IPFS ─────────────────────────────
-    const existing = await findByHash(rawFileHash);
+    const { data: existing, error: duplicateErr } = await supabase
+      .from("evidence_records")
+      .select("id, case_name, file_name, timestamp")
+      .eq("file_hash", rawFileHash)
+      .maybeSingle();
+    if (duplicateErr) {
+      throw new Error(`Supabase duplicate check failed: ${duplicateErr.message}`);
+    }
     if (existing) {
       return res.status(409).json({
         success: false,
         error: "Evidence already exists.",
         existing: {
-          evidenceId: existing.evidenceId,
-          caseId: existing.caseId,
-          fileName: existing.fileName,
+          evidenceId: existing.id,
+          caseId: existing.case_name,
+          fileName: existing.file_name,
           uploadedAt: existing.timestamp,
         },
       });
@@ -170,32 +175,35 @@ export async function uploadEvidence(req, res, next) {
 
     // Register on-chain.
     const result = await blockchain.addEvidence(hashToStore);
+    const chainRecord = await blockchain.getEvidence(result.evidenceId);
 
-    // Persist off-chain metadata.
-    await saveMetadata({
-      evidenceId: result.evidenceId,
-      caseId,
-      caseName,
-      fileName: req.file.originalname,
-      fileStoredAs: req.file.filename,
-      fileSize: req.file.size,
-      hash: hashToStore,
-      blockchainHash: hashToStore,
-      fileHash: rawFileHash, // ensures we can detect duplicates across flows
-      uploadedBy: signerAddress,
-      txHash: result.transactionHash,
-      transactionHash: result.transactionHash,
-      blockNumber: result.blockNumber,
-      metadataCID,
-      fileCID,
-      ipfsCid: fileCID,
+    // Persist off-chain metadata to Supabase.
+    const dbPayload = {
+      id: Number(result.evidenceId),
+      case_name: caseName,
       description: req.body.description || null,
-      evidenceType,
+      evidence_type: evidenceType,
       location: req.body.location || null,
-      suspectName,
-      dateCollected,
-      registeredAt: new Date().toISOString(),
+      suspect_name: suspectName,
+      date_collected: dateCollected,
+      file_name: req.file.originalname,
+      file_hash: rawFileHash,
+      blockchain_hash: hashToStore,
+      transaction_hash: result.transactionHash,
+      block_number: result.blockNumber,
+      ipfs_cid: fileCID,
+      metadata_cid: metadataCID,
+      owner: chainRecord.owner,
+      uploaded_by: signerAddress,
+      timestamp: chainRecord.timestamp,
+      registered_at: chainRecord.registeredAt,
+    };
+    const { error: insertErr } = await supabase.from("evidence_records").upsert(dbPayload, {
+      onConflict: "id",
     });
+    if (insertErr) {
+      throw new Error(`Supabase metadata insert failed: ${insertErr.message}`);
+    }
 
     return res.status(201).json({
       success: true,
@@ -260,10 +268,22 @@ export async function verifyEvidence(req, res, next) {
     const id = parseEvidenceId(evidenceId, res);
     if (id === null) return;
 
-    // Fetch blockchain record (for context fields) and persisted metadata.
-    const metadata = await getMetadataById(id);
-    const record = await blockchain.getEvidence(id);
-    const storedFileHash = metadata?.fileHash?.toLowerCase?.() ?? null;
+    const { data: dbRow, error: rowErr } = await supabase
+      .from("evidence_records")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (rowErr) {
+      throw new Error(`Supabase verification fetch failed: ${rowErr.message}`);
+    }
+    if (!dbRow) {
+      return res.status(404).json({
+        success: false,
+        error: `Evidence ID ${id} not found in metadata store.`,
+      });
+    }
+
+    const storedFileHash = dbRow.file_hash?.toLowerCase?.() ?? null;
     if (!storedFileHash) {
       return res.status(422).json({
         success: false,
@@ -281,16 +301,14 @@ export async function verifyEvidence(req, res, next) {
       success: true,
       data: {
         status: matches ? "VALID" : "TAMPERED",
-        evidenceId: record.id,
-        caseId: metadata?.caseId ?? null,
-        fileName: metadata?.fileName ?? null,
+        evidenceId: String(dbRow.id),
         storedHash: storedFileHash,
         computedHash: uploadedFileHash,
-        blockchainHash: metadata?.blockchainHash ?? record.hash,
+        blockchainHash: dbRow.blockchain_hash ?? null,
         matches,
-        owner: record.owner,
-        timestamp: record.timestamp,
-        registeredAt: record.registeredAt,
+        owner: dbRow.owner ?? null,
+        timestamp: dbRow.timestamp ?? null,
+        registeredAt: dbRow.registered_at ?? null,
       },
     });
   } catch (err) {
@@ -375,12 +393,24 @@ export async function getEvidenceById(req, res, next) {
     const id = parseEvidenceId(req.params.id, res);
     if (id === null) return;
 
-    const record = await blockchain.getEvidence(id);
-    const metadata = await getMetadataById(id);
+    const { data: dbRow, error } = await supabase
+      .from("evidence_records")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Supabase evidence fetch failed: ${error.message}`);
+    }
+    if (!dbRow) {
+      return res.status(404).json({
+        success: false,
+        error: `Evidence ID ${id} not found in metadata store.`,
+      });
+    }
 
     return res.json({
       success: true,
-      data: hydrateEvidenceRecord(record, metadata),
+      data: hydrateEvidenceRecord(dbRow),
     });
   } catch (err) {
     if (isNotFoundError(err)) {
@@ -396,17 +426,15 @@ export async function getEvidenceById(req, res, next) {
 // ─── GET /evidence/all ────────────────────────────────────────────────────────
 export async function getAllEvidence(req, res, next) {
   try {
-    const allMetadata = await getAllMetadata();
-    const hydrated = await Promise.all(
-      allMetadata.map(async (metadata) => {
-        const record = await blockchain.getEvidence(metadata.evidenceId);
-        return hydrateEvidenceRecord(record, metadata);
-      })
-    );
+    const { data: rows, error } = await supabase
+      .from("evidence_records")
+      .select("*")
+      .order("registered_at", { ascending: false });
+    if (error) {
+      throw new Error(`Supabase evidence list fetch failed: ${error.message}`);
+    }
 
-    hydrated.sort(
-      (a, b) => new Date(b.registeredAt || 0).getTime() - new Date(a.registeredAt || 0).getTime()
-    );
+    const hydrated = (rows ?? []).map((row) => hydrateEvidenceRecord(row));
 
     return res.json({
       success: true,
@@ -442,28 +470,38 @@ export async function getEvidenceHistory(req, res, next) {
     const id = parseEvidenceId(req.params.id, res);
     if (id === null) return;
 
-    const blockchainData = await blockchain.getEvidence(id);
-    const metadata = await getMetadataById(id);
+    const { data: dbRow, error } = await supabase
+      .from("evidence_records")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Supabase evidence history fetch failed: ${error.message}`);
+    }
+    if (!dbRow) {
+      return res.status(404).json({
+        success: false,
+        error: `Evidence ID ${id} not found in metadata store.`,
+      });
+    }
 
     return res.json({
       success: true,
       data: {
-        evidenceId: blockchainData.id,
-        metadata: metadata
-          ? {
-              caseId: metadata.caseId,
-              fileName: metadata.fileName,
-              fileStoredAs: metadata.fileStoredAs,
-              fileSize: metadata.fileSize,
-              uploadedBy: metadata.uploadedBy,
-              submittedAt: metadata.timestamp,
-            }
-          : null,
+        evidenceId: String(dbRow.id),
+        metadata: {
+          caseId: dbRow.case_name,
+          fileName: dbRow.file_name,
+          fileStoredAs: null,
+          fileSize: null,
+          uploadedBy: dbRow.uploaded_by,
+          submittedAt: dbRow.timestamp,
+        },
         blockchainData: {
-          hash: blockchainData.hash,
-          owner: blockchainData.owner,
-          timestamp: blockchainData.timestamp,
-          registeredAt: blockchainData.registeredAt,
+          hash: dbRow.blockchain_hash,
+          owner: dbRow.owner,
+          timestamp: dbRow.timestamp,
+          registeredAt: dbRow.registered_at,
         },
       },
     });
@@ -487,40 +525,43 @@ export async function getEvidenceByHash(req, res, next) {
   try {
     const hashParam = req.params.hash;
 
-    // 1. Find metadataCID from metadata.json
-    const metadata = await findByHash(hashParam);
-    if (!metadata) {
+    const { data: dbRow, error } = await supabase
+      .from("evidence_records")
+      .select("*")
+      .or(`blockchain_hash.eq.${hashParam},file_hash.eq.${hashParam}`)
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      throw new Error(`Supabase hash lookup failed: ${error.message}`);
+    }
+    if (!dbRow) {
        return res.status(404).json({
         success: false,
-        error: `Evidence with hash ${hashParam} not found in local store.`,
+        error: `Evidence with hash ${hashParam} not found in metadata store.`,
       });
     }
 
-    // 2. Fetch blockchain data
-    const id = metadata.evidenceId;
-    const blockchainData = await blockchain.getEvidence(id);
-
     let ipfsMetadata = null;
-    if (metadata.metadataCID) {
+    if (dbRow.metadata_cid) {
       // 3. Fetch metadata from IPFS
       try {
-        ipfsMetadata = await fetchMetadataFromIPFS(metadata.metadataCID);
+        ipfsMetadata = await fetchMetadataFromIPFS(dbRow.metadata_cid);
       } catch (e) {
-        console.warn(`[getEvidenceByHash] Failed to fetch IPFS metadata for CID ${metadata.metadataCID}`);
+        console.warn(`[getEvidenceByHash] Failed to fetch IPFS metadata for CID ${dbRow.metadata_cid}`);
       }
     }
 
     // 4. Return full evidence
     return res.json({
       success: true,
-      data: hydrateEvidenceRecord(blockchainData, {
-        ...metadata,
-        caseName: ipfsMetadata?.caseName || metadata.caseName || metadata.caseId,
-        description: ipfsMetadata?.description || metadata.description || null,
-        evidenceType: ipfsMetadata?.evidenceType || metadata.evidenceType || metadata.type || null,
-        location: ipfsMetadata?.location || metadata.location || null,
-        suspectName: ipfsMetadata?.suspectName || metadata.suspectName || null,
-        dateCollected: ipfsMetadata?.dateCollected || metadata.dateCollected || metadata.date || null,
+      data: hydrateEvidenceRecord({
+        ...dbRow,
+        case_name: ipfsMetadata?.caseName || dbRow.case_name,
+        description: ipfsMetadata?.description || dbRow.description,
+        evidence_type: ipfsMetadata?.evidenceType || dbRow.evidence_type,
+        location: ipfsMetadata?.location || dbRow.location,
+        suspect_name: ipfsMetadata?.suspectName || dbRow.suspect_name,
+        date_collected: ipfsMetadata?.dateCollected || dbRow.date_collected,
       }),
     });
   } catch (err) {
