@@ -294,8 +294,22 @@ export async function verifyEvidence(req, res, next) {
     // Verification must be file checksum vs original uploaded checksum.
     const uploadedFileHash = computeHash(await readFile(req.file.path)).toLowerCase();
     const matches = uploadedFileHash === storedFileHash;
+    const status = matches ? "VALID" : "TAMPERED";
 
-    console.log(`[verify] id=${id}  status=${matches ? "VALID" : "TAMPERED"}  file="${req.file.originalname}"`);
+    console.log(`[verify] id=${id}  status=${status}  file="${req.file.originalname}"`);
+
+    // Insert into verification_logs
+    const logPayload = {
+      evidence_id: Number(dbRow.id),
+      status,
+      owner: dbRow.owner ?? null,
+      computed_hash: uploadedFileHash,
+      stored_hash: storedFileHash,
+    };
+    const { error: logErr } = await supabase.from("verification_logs").insert(logPayload);
+    if (logErr) {
+      console.error(`[verify] Failed to log verification: ${logErr.message}`);
+    }
 
     return res.json({
       success: true,
@@ -563,6 +577,36 @@ export async function getEvidenceByHash(req, res, next) {
         suspect_name: ipfsMetadata?.suspectName || dbRow.suspect_name,
         date_collected: ipfsMetadata?.dateCollected || dbRow.date_collected,
       }),
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// ─── GET /verification/stats ──────────────────────────────────────────────────
+
+export async function getVerificationStats(req, res, next) {
+  try {
+    const { count: verifiedCount, error: vErr } = await supabase
+      .from("verification_logs")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "VALID");
+
+    if (vErr) throw new Error(`Failed to fetch verified count: ${vErr.message}`);
+
+    const { count: tamperedCount, error: tErr } = await supabase
+      .from("verification_logs")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "TAMPERED");
+
+    if (tErr) throw new Error(`Failed to fetch tampered count: ${tErr.message}`);
+
+    return res.json({
+      success: true,
+      data: {
+        verified: verifiedCount || 0,
+        tampered: tamperedCount || 0,
+      },
     });
   } catch (err) {
     next(err);

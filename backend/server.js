@@ -27,6 +27,7 @@ mkdirSync(UPLOADS_DIR, { recursive: true });
 import express from "express";
 import cors from "cors";
 import evidenceRoutes from "./routes/evidenceRoutes.js";
+import { getVerificationStats } from "./controllers/evidenceController.js";
 import { errorHandler } from "./utils/errorHandler.js";
 import { requestIdMiddleware } from "./utils/requestId.js";
 
@@ -68,6 +69,7 @@ app.use((req, res, next) => {
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use("/evidence", evidenceRoutes);
+app.get("/verification/stats", getVerificationStats);
 
 // Health check
 app.get("/health", (_req, res) => {

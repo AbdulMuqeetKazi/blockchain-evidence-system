@@ -96,3 +96,8 @@ export function parseApiError(error: any): string {
     "Unknown API error"
   );
 }
+
+export const getVerificationStats = async () => {
+  const response = await api.get("/verification/stats");
+  return response.data;
+};

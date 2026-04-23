@@ -5,12 +5,13 @@ import { Card, CardHeader, CardContent } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Link } from "react-router";
 import { useEvidence } from "../contexts/EvidenceContext";
-import { getAllEvidence } from "../../services/api";
+import { getAllEvidence, getVerificationStats } from "../../services/api";
 
 export function Dashboard() {
   const { totalCount, isConnected, network } = useEvidence();
 
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [stats, setStats] = useState({ verified: "--", tampered: "--" });
 
   const fetchRecent = async () => {
     try {
@@ -34,9 +35,27 @@ export function Dashboard() {
     }
   };
 
+  const fetchStats = async () => {
+    try {
+      const response = await getVerificationStats();
+      if (response && response.success && response.data) {
+        setStats({
+          verified: response.data.verified.toString(),
+          tampered: response.data.tampered.toString()
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch verification stats:", error);
+    }
+  };
+
   useEffect(() => {
     fetchRecent();
-    const interval = setInterval(fetchRecent, 10000);
+    fetchStats();
+    const interval = setInterval(() => {
+      fetchRecent();
+      fetchStats();
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -57,14 +76,14 @@ export function Dashboard() {
         />
         <StatCard
           title="Verified Records"
-          value="--"
+          value={stats.verified}
           icon={ShieldCheck}
           trend="Calculated on verify"
           color="green"
         />
         <StatCard
           title="Tampered Records"
-          value="--"
+          value={stats.tampered}
           icon={AlertTriangle}
           trend="Calculated on verify"
           color="red"
