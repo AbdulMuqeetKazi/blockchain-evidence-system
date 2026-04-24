@@ -145,3 +145,8 @@ npx hardhat test
 - The frontend is optimized for deployment on Vercel or Netlify.
 - The Node.js backend is configured for deployment on Render (`render.yaml` provided).
 - Smart contracts live on the Ethereum Sepolia testnet.
+
+
+## By
+
+-Abdul Muqeet Kazi [ AMK CODER ]
