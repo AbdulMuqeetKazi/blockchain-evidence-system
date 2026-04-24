@@ -5,7 +5,7 @@ A production-grade Digital Evidence Management System on Ethereum Sepolia.
 ## Deployed Contract
 
 **Network:** Ethereum Sepolia Testnet  
-**Address:** `0xB3969ec127aC5837e7336ed9611d490714c61F9A`  
+**Address:** `Your Address`  
 **Contract:** `EvidenceRegistry`
 
 > The contract is already deployed. Do **not** redeploy it.
@@ -75,7 +75,7 @@ Network  : Sepolia (chainId 11155111)
 Block    : 8234561
 Signer   : 0xYourAddress
 Balance  : 0.12 ETH
-Contract : 0xB3969ec127aC5837e7336ed9611d490714c61F9A
+Contract :
 Evidence count (before) : 3
 
 ── Computing hash ───────────────────────────────────
@@ -104,7 +104,7 @@ ID    : 4
 ────────────────────────────────────────────────────
   SUMMARY
 ────────────────────────────────────────────────────
-  Contract         : 0xB3969ec127aC5837e7336ed9611d490714c61F9A
+  Contract         : 
   Evidence ID      : 4
   Integrity check  : PASS ✓
   Tamper detection : PASS ✓
